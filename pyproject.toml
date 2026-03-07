@@ -1,0 +1,55 @@
+[project]
+name = "airplanestracker"
+version = "0.1.0"
+description = "Project_2"
+authors = [
+    {name = "Dmitry"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.14"
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.black]
+line-length = 119
+target-version = ['py314']
+exclude = '''
+/(
+ \.git
+ | \.hg
+ | \.mypy_cache
+ | \.tox
+ | \.venv
+ | \.idea
+ | build
+ | dist
+ | __pycache__
+)/
+'''
+
+[tool.isort]
+line_length = 119
+profile = "black"
+
+[tool.mypy]
+disallow_untyped_defs = true
+warn_return_any = true
+exclude = '''
+/(venv|\.venv)/
+'''
+
+[tool.poetry.dependencies]
+pandas = "^3.0.1"
+requests = "^2.32.5"
+python-dotenv = "^1.2.2"
+openpyxl = "^3.1.5"
+black = "^26.3.0"
+flake8 = "^7.3.0"
+isort = "^8.0.1"
+pytest = "^9.0.2"
+pytest-cov = "^7.0.0"
