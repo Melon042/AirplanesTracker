@@ -1,3 +1,6 @@
+from typing import Self
+
+
 class Airplane:
     """Класс для работы с информацией о самолётах"""
 
@@ -66,21 +69,31 @@ class Airplane:
         return value
 
 
-    def __gt__(self, other: 'Airplane') -> bool:
+    def __gt__(self, other: Self) -> bool:
         """Сравнивает скорость (больше)"""
         return self._velocity > other._velocity
 
 
-    def __lt__(self, other: 'Airplane') -> bool:
+    def __lt__(self, other: Self) -> bool:
         """Сравнивает скорость (меньше)"""
         return self._velocity < other._velocity
 
 
-    def is_higher(self, other: "Airplane") -> bool:
+    def is_higher(self, other: Self) -> bool:
         """Сравнивает высоту (больше)"""
         return self._altitude > other._altitude
 
 
-    def is_lower(self, other: "Airplane") -> bool:
+    def is_lower(self, other: Self) -> bool:
         """Сравнивает высоту (меньше)"""
         return self._altitude < other._altitude
+
+    def to_dict(self) -> dict:
+        """Преобразует объект в словарь"""
+        return {
+            "airplane_id": self._airplane_id,
+            "country_of_registration": self._country_of_registration,
+            "call_sign": self._call_sign,
+            "on_ground": self._on_ground,
+            "velocity": self._velocity,
+            "altitude": self._altitude}
