@@ -17,7 +17,7 @@ class AbstractAPIAdapter(ABC):
         pass
 
     @abstractmethod
-    def _get_airplanes(self, country: str) -> None:
+    def get_airplanes(self, country: str) -> dict:
         """Получить информацию о самолётах в заданной стране"""
         pass
 
@@ -29,7 +29,6 @@ class APIAdapter(AbstractAPIAdapter):
         """Инициализация объекта"""
         self._openstreetmap_url = 'https://nominatim.openstreetmap.org/search'
         self._opensky_url = 'https://opensky-network.org/api/states/all?'
-        self._airplanes = None
 
 
     def _connect_to_api(self, url: str, params: dict, headers: Optional[dict] = None) -> Optional[Response]:
@@ -42,7 +41,7 @@ class APIAdapter(AbstractAPIAdapter):
             raise TypeError(f"Не удалось подключиться к API-сервису или сервис не отвечает")
 
 
-    def _get_airplanes(self, country: str) -> None:
+    def get_airplanes(self, country: str) -> dict:
         """Получить информацию о самолётах в заданной стране"""
 
         # Headers с user-agent - обязательный параметр при запросе к nominatim.openstreetmap.
@@ -70,4 +69,5 @@ class APIAdapter(AbstractAPIAdapter):
 
         response_opensky = self._connect_to_api(url=self._opensky_url, params=params_opensky)
 
-        self._airplanes = response_opensky.json()
+        result = response_opensky.json()
+        return result
