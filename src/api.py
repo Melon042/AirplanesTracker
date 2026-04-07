@@ -1,6 +1,7 @@
-from requests import get, Response
 from abc import ABC, abstractmethod
 from typing import Optional
+
+from requests import Response, get
 
 
 class AbstractAPIAdapter(ABC):
@@ -27,9 +28,8 @@ class APIAdapter(AbstractAPIAdapter):
 
     def __init__(self) -> None:
         """Инициализация объекта"""
-        self._openstreetmap_url = 'https://nominatim.openstreetmap.org/search'
-        self._opensky_url = 'https://opensky-network.org/api/states/all?'
-
+        self._openstreetmap_url = "https://nominatim.openstreetmap.org/search"
+        self._opensky_url = "https://opensky-network.org/api/states/all?"
 
     def _connect_to_api(self, url: str, params: dict, headers: Optional[dict] = None) -> Optional[Response]:
         """Метод подключения к API"""
@@ -38,34 +38,29 @@ class APIAdapter(AbstractAPIAdapter):
             response.raise_for_status()
             return response
         except Exception:
-            raise TypeError(f"Не удалось подключиться к API-сервису или сервис не отвечает")
-
+            raise TypeError("Не удалось подключиться к API-сервису или сервис не отвечает")
 
     def get_airplanes(self, country: str) -> dict:
         """Получить информацию о самолётах в заданной стране"""
 
         # Headers с user-agent - обязательный параметр при запросе к nominatim.openstreetmap.
-        headers_openstreetmap = {
-            'User-Agent': 'test-app'}
+        headers_openstreetmap = {"User-Agent": "test-app"}
 
-        params_openstreetmap = {
-            'country': country,
-            'format': 'json',
-            'limit': 1}
+        params_openstreetmap = {"country": country, "format": "json", "limit": 1}
 
         response_openstreetmap = self._connect_to_api(
-            url=self._openstreetmap_url,
-            params=params_openstreetmap,
-            headers=headers_openstreetmap)
+            url=self._openstreetmap_url, params=params_openstreetmap, headers=headers_openstreetmap
+        )
 
         data = response_openstreetmap.json()
-        geo_coordinates = data[0].get('boundingbox')
+        geo_coordinates = data[0].get("boundingbox")
 
         params_opensky = {
-            'lamin': geo_coordinates[0],
-            'lamax': geo_coordinates[1],
-            'lomin': geo_coordinates[2],
-            'lomax': geo_coordinates[3]}
+            "lamin": geo_coordinates[0],
+            "lamax": geo_coordinates[1],
+            "lomin": geo_coordinates[2],
+            "lomax": geo_coordinates[3],
+        }
 
         response_opensky = self._connect_to_api(url=self._opensky_url, params=params_opensky)
 

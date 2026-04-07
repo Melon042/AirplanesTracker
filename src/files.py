@@ -1,12 +1,10 @@
+import json
+import os
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Optional
 
-
 from src.airplane import Airplane
-import os
-import json
-from pathlib import Path
-
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -15,7 +13,9 @@ class AbstractAirplaneFile(ABC):
     """Абстрактный класс для работы с информацией о самолётах в файле"""
 
     @abstractmethod
-    def __init__(self, filename: Optional[str]) -> None: #В дочерних классах необходимо указать filename по умолчанию.
+    def __init__(
+        self, filename: Optional[str]
+    ) -> None:  # В дочерних классах необходимо указать filename по умолчанию.
         """Инициализация объекта"""
         self._filename = filename
 
@@ -30,8 +30,13 @@ class AbstractAirplaneFile(ABC):
         pass
 
     @abstractmethod
-    def get_data_from_file(self, airplane_id: Optional[str] = None, country_of_registration: Optional[str] = None,
-                           call_sign: Optional[str] = None, on_ground: Optional[bool] = None) -> list[dict] | None:
+    def get_data_from_file(
+        self,
+        airplane_id: Optional[str] = None,
+        country_of_registration: Optional[str] = None,
+        call_sign: Optional[str] = None,
+        on_ground: Optional[bool] = None,
+    ) -> list[dict] | None:
         """Метод для получения данных о самолётах из файла по указанным критериям"""
         pass
 
@@ -47,7 +52,6 @@ class AirplaneFileJson(AbstractAirplaneFile):
         self._filepath = self._filedir / filename
 
         os.makedirs(self._filedir, exist_ok=True)
-
 
     def save_to_file(self, airplanes: list[Airplane]) -> None:
         """Метод для сохранения информации о самолётах в Json-файл"""
@@ -68,10 +72,8 @@ class AirplaneFileJson(AbstractAirplaneFile):
         with open(self._filepath, "w", encoding="utf-8") as file:
             json.dump(list(data_map.values()), file, ensure_ascii=False, indent=4)
 
-
     def delete_data_from_file(self, airplanes: list[Airplane]) -> None:
         """Метод для удаления информации о самолётах из файла"""
-
 
         if not self._filepath.exists():
             print(f"Не удалось выполнить удаление. Файла {self._filename} не существует.")
@@ -89,9 +91,23 @@ class AirplaneFileJson(AbstractAirplaneFile):
         with open(self._filepath, "w", encoding="utf-8") as file:
             json.dump(new_data, file, ensure_ascii=False, indent=4)
 
+    def delete_all_from_file(self) -> None:
+        """Метод для удаления всех данных из файла"""
 
-    def get_data_from_file(self, airplane_id: Optional[str] = None, country_of_registration: Optional[str] = None,
-                           call_sign: Optional[str] = None, on_ground: Optional[bool] = None) -> list[dict] | None:
+        if not self._filepath.exists():
+            print(f"Не удалось выполнить удаление. Файла {self._filename} не существует.")
+            return None
+        else:
+            with open(self._filepath, "w", encoding="utf-8") as file:
+                json.dump([], file, ensure_ascii=False, indent=4)
+
+    def get_data_from_file(
+        self,
+        airplane_id: Optional[str] = None,
+        country_of_registration: Optional[str] = None,
+        call_sign: Optional[str] = None,
+        on_ground: Optional[bool] = None,
+    ) -> list[Airplane] | None:
         """Метод для получения данных о самолётах из файла по указанным критериям.
         Без указания критериев возвращает все данные из файла"""
 
@@ -106,13 +122,14 @@ class AirplaneFileJson(AbstractAirplaneFile):
             "airplane_id": airplane_id,
             "country_of_registration": country_of_registration,
             "call_sign": call_sign,
-            "on_ground": on_ground}
+            "on_ground": on_ground,
+        }
 
         filters = {key: value for key, value in filters.items() if value is not None}
 
-        if not filters:
-            return data
+        if filters:
+            filtered_dicts = [i for i in data if all(i.get(key) == value for key, value in filters.items())]
+        else:
+            filtered_dicts = data
 
-        result = [airplane for airplane in data if all(airplane.get(key) == value for key, value in filters.items())]
-
-        return result
+        return [Airplane(**item) for item in filtered_dicts]

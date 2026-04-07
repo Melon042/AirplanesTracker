@@ -1,50 +1,80 @@
-from src.api import APIAdapter
-from src.utils import parse_opensky_response
 from src.airplane import Airplane
-
+from src.api import APIAdapter
+from src.files import AirplaneFileJson
+from src.utils import parse_opensky_response
 
 
 def user_interaction():
     """Функция для взаимодействия с пользователем через консоль"""
 
-    country_for_search = input("Введите название страны, на территории которой нужно найти самолёты (латиницей): ")
+    json_saver = AirplaneFileJson()
 
-    api_adapter = APIAdapter()
-    response = api_adapter.get_airplanes(country_for_search)
-    parsed_response = parse_opensky_response(response)
-    planes = [Airplane.from_api_response_to_object(state) for state in parsed_response]
+    while True:
+        print("\n1. Записать данные о самолетах в стране из API в файл")
+        print("2. Показать все сохраненные самолеты")
+        print("3. Найти самолеты по стране регистрации в сохраненных")
+        print("4. Удалить самолет из сохраненных по позывному")
+        print("5. Показать топ N самолётов по скорости из файла")
+        print("6. Удалить все самолёты из файла")
+        print("7. Выйти")
 
-    to_sort_top_altitude = input("\nХотите отобразить топ самолётов по высоте полёта? (да/нет) ").lower() == "да"
-    if to_sort_top_altitude:
-        n_top_altitude = int(input("\nТоп сколько самолётов по высоте полёта отобразить? "))
+        choice = input("Выберите действие: ")
 
-    to_sort_country_of_reg = input("\nХотите отсортировать самолёты по стране регистрации? (да/нет) ").lower() == "да"
-    if to_sort_country_of_reg:
-        query_country_of_reg = input("\nПо какой стране регистрации отобразить самолёты? ")
+        if choice == "1":
+            country = input("\nВведите страну (латиницей): ")
 
+            api_adapter = APIAdapter()
+            response = api_adapter.get_airplanes(country)
+            parsed_response = parse_opensky_response(response)
+            airplanes = [Airplane.from_api_response_to_object(state) for state in parsed_response]
 
-    if to_sort_country_of_reg:
-        planes = [p for p in planes if p.country_of_registration == query_country_of_reg]
+            json_saver.save_to_file(airplanes)
 
-    if to_sort_top_altitude:
-        planes = sorted(planes, key=lambda p: p.altitude, reverse=True)[:n_top_altitude]
+            print(f"\nВ стране {country} найдено самолётов: {len(airplanes)}. " f"Данные добавлены/обновлены в файле.")
 
+        elif choice == "2":
+            airplanes = json_saver.get_data_from_file()
 
-    if len(planes):
-        print(f"По заданным параметрам найдено самолётов: {len(planes)}!")
-        for counter, plane in enumerate(planes, 1):
-            print(f"{counter}.\n{plane}\n\n")
-    else:
-        print("Самолётов по заданным параметрам не найдено.")
+            if len(airplanes):
+                print(f"\nСамолётов найдено: {len(airplanes)}!")
+                for counter, plane in enumerate(airplanes, 1):
+                    print(f"{counter}.\n{plane}\n\n")
+            else:
+                print("\nВ файле пока нет самолётов.")
 
+        elif choice == "3":
+            country = input("\nВведите страну регистрации (латиницей): ")
+            airplanes = json_saver.get_data_from_file(country_of_registration=country)
+            if len(airplanes):
+                print(f"\nСамолётов найдено: {len(airplanes)}!")
+                for counter, plane in enumerate(airplanes, 1):
+                    print(f"{counter}.\n{plane}\n\n")
+            else:
+                print("\nВ файле нет самолётов с такой страной регистрации.")
 
+        elif choice == "4":
+            callsign = input("\nВведите позывной для удаления: ")
 
+            airplane_to_delete = json_saver.get_data_from_file(call_sign=callsign)
+            json_saver.delete_data_from_file(airplane_to_delete)
 
+            print(f"\nСамолет с позывным {callsign} удален (если существовал).")
 
+        elif choice == "5":
+            n = int(input("\nТоп сколько самолётов показать?: "))
 
+            airplanes = json_saver.get_data_from_file()
+            airplanes = sorted(airplanes, key=lambda a: a.velocity, reverse=True)[:n]
 
+            print(f"\nТоп {n} самолётов по скорости:\n")
+            for counter, airplane in enumerate(airplanes, 1):
+                print(f"{counter}.\n{airplane}\n\n")
 
+        elif choice == "6":
 
+            json_saver.delete_all_from_file()
+            print("\nФайл очищен.")
 
-
-
+        elif choice == "7":
+            print("\nРабота программы завершена.")
+            break
