@@ -1,0 +1,135 @@
+import json
+import os
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Optional
+
+from src.airplane import Airplane
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+
+class AbstractAirplaneFile(ABC):
+    """Абстрактный класс для работы с информацией о самолётах в файле"""
+
+    @abstractmethod
+    def __init__(
+        self, filename: Optional[str]
+    ) -> None:  # В дочерних классах необходимо указать filename по умолчанию.
+        """Инициализация объекта"""
+        self._filename = filename
+
+    @abstractmethod
+    def save_to_file(self, airplanes: list[Airplane]) -> None:
+        """Метод для сохранения информации о самолётах в файл"""
+        pass
+
+    @abstractmethod
+    def delete_data_from_file(self, airplanes: list[Airplane]) -> None:
+        """Метод для удаления информации о самолётах из файла"""
+        pass
+
+    @abstractmethod
+    def get_data_from_file(
+        self,
+        airplane_id: Optional[str] = None,
+        country_of_registration: Optional[str] = None,
+        call_sign: Optional[str] = None,
+        on_ground: Optional[bool] = None,
+    ) -> list[dict] | None:
+        """Метод для получения данных о самолётах из файла по указанным критериям"""
+        pass
+
+
+class AirplaneFileJson(AbstractAirplaneFile):
+    """Класс для сохранения информации о самолётах в Json-файл."""
+
+    def __init__(self, filename: str = "airplanes.json") -> None:
+        """Инициализация объекта"""
+
+        self._filename = filename
+        self._filedir = PROJECT_ROOT / "data"
+        self._filepath = self._filedir / filename
+
+        os.makedirs(self._filedir, exist_ok=True)
+
+    def save_to_file(self, airplanes: list[Airplane]) -> None:
+        """Метод для сохранения информации о самолётах в Json-файл"""
+
+        if self._filepath.exists():
+            with open(self._filepath, "r", encoding="utf-8") as f:
+                old_data = json.load(f)
+        else:
+            old_data = []
+
+        new_data = [airplane.to_dict() for airplane in airplanes]
+
+        data_map = {airplane.get("airplane_id"): airplane for airplane in old_data}
+
+        for airplane in new_data:
+            data_map[airplane.get("airplane_id")] = airplane
+
+        with open(self._filepath, "w", encoding="utf-8") as file:
+            json.dump(list(data_map.values()), file, ensure_ascii=False, indent=4)
+
+    def delete_data_from_file(self, airplanes: list[Airplane]) -> None:
+        """Метод для удаления информации о самолётах из файла"""
+
+        if not self._filepath.exists():
+            print(f"Не удалось выполнить удаление. Файла {self._filename} не существует.")
+            return None
+        else:
+            with open(self._filepath, "r", encoding="utf-8") as file:
+                data = json.load(file)
+
+        airplanes = [airplane.to_dict() for airplane in airplanes]
+
+        keys_to_delete = [airplane["airplane_id"] for airplane in airplanes]
+
+        new_data = [airplane for airplane in data if airplane.get("airplane_id") not in keys_to_delete]
+
+        with open(self._filepath, "w", encoding="utf-8") as file:
+            json.dump(new_data, file, ensure_ascii=False, indent=4)
+
+    def delete_all_from_file(self) -> None:
+        """Метод для удаления всех данных из файла"""
+
+        if not self._filepath.exists():
+            print(f"Не удалось выполнить удаление. Файла {self._filename} не существует.")
+            return None
+        else:
+            with open(self._filepath, "w", encoding="utf-8") as file:
+                json.dump([], file, ensure_ascii=False, indent=4)
+
+    def get_data_from_file(
+        self,
+        airplane_id: Optional[str] = None,
+        country_of_registration: Optional[str] = None,
+        call_sign: Optional[str] = None,
+        on_ground: Optional[bool] = None,
+    ) -> list[Airplane] | None:
+        """Метод для получения данных о самолётах из файла по указанным критериям.
+        Без указания критериев возвращает все данные из файла"""
+
+        if not self._filepath.exists():
+            print(f"Не удалось получить данные. Файла {self._filename} не существует.")
+            return None
+
+        with open(self._filepath, "r", encoding="utf-8") as file:
+            data = json.load(file)
+
+        filters = {
+            "airplane_id": airplane_id,
+            "country_of_registration": country_of_registration,
+            "call_sign": call_sign,
+            "on_ground": on_ground,
+        }
+
+        filters = {key: value for key, value in filters.items() if value is not None}
+
+        if filters:
+            filtered_dicts = [i for i in data if all(i.get(key) == value for key, value in filters.items())]
+        else:
+            filtered_dicts = data
+
+        return [Airplane(**item) for item in filtered_dicts]
