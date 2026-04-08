@@ -28,8 +28,8 @@ class APIAdapter(AbstractAPIAdapter):
 
     def __init__(self) -> None:
         """Инициализация объекта"""
-        self._openstreetmap_url = "https://nominatim.openstreetmap.org/search"
-        self._opensky_url = "https://opensky-network.org/api/states/all?"
+        self.__openstreetmap_url = "https://nominatim.openstreetmap.org/search"
+        self.__opensky_url = "https://opensky-network.org/api/states/all?"
 
     def _connect_to_api(self, url: str, params: dict, headers: Optional[dict] = None) -> Optional[Response]:
         """Метод подключения к API"""
@@ -49,7 +49,7 @@ class APIAdapter(AbstractAPIAdapter):
         params_openstreetmap = {"country": country, "format": "json", "limit": 1}
 
         response_openstreetmap = self._connect_to_api(
-            url=self._openstreetmap_url, params=params_openstreetmap, headers=headers_openstreetmap
+            url=self.__openstreetmap_url, params=params_openstreetmap, headers=headers_openstreetmap
         )
 
         data = response_openstreetmap.json()
@@ -62,7 +62,7 @@ class APIAdapter(AbstractAPIAdapter):
             "lomax": geo_coordinates[3],
         }
 
-        response_opensky = self._connect_to_api(url=self._opensky_url, params=params_opensky)
+        response_opensky = self._connect_to_api(url=self.__opensky_url, params=params_opensky)
 
         result = response_opensky.json()
         return result
